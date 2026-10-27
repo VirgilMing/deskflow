@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "common/Enums.h"
+
 #include <QDialog>
 
 class SettingsDialogButtonBox;
@@ -25,6 +27,7 @@ class ClientConfigDialog : public QDialog
 public:
   explicit ClientConfigDialog(QWidget *parent = nullptr);
   ~ClientConfigDialog() override;
+  void setClipboardStatus(deskflow::ClipboardStatus status);
 
 protected:
   void changeEvent(QEvent *e) override;

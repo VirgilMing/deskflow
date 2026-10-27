@@ -455,6 +455,9 @@
             </item>
            </layout>
           </item>
+          <item>
+           <widget class="deskflow::gui::ClipboardStatusLabel" name="labelClipboardStatus"/>
+          </item>
          </layout>
         </widget>
        </item>
@@ -899,6 +902,11 @@ Enabling this setting will disable the server config GUI.</string>
    <class>NewComputerWidget</class>
    <extends>QLabel</extends>
    <header>widgets/NewComputerWidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>deskflow::gui::ClipboardStatusLabel</class>
+   <extends>QLabel</extends>
+   <header>gui/widgets/ClipboardStatusLabel.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>
