@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2025 Chris Rizzitello <sithlord48@gmail.com>
  * SPDX-FileCopyrightText: (C) 2024 - 2025 Synergy App Ltd
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
@@ -26,6 +27,7 @@ class DaemonIpcClient;
 
 class CoreProcess : public QObject
 {
+  friend class CoreProcessTests;
   using ConnectionState = deskflow::core::ConnectionState;
   using ProcessMode = Settings::ProcessMode;
   using ProcessState = deskflow::core::ProcessState;
@@ -38,7 +40,7 @@ public:
     StartFailed
   };
 
-  explicit CoreProcess(const ServerConfig &serverConfig);
+  explicit CoreProcess(const ServerConfig &serverConfig, const QString &ipcSocketName = {});
 
   void start(std::optional<ProcessMode> processMode = std::nullopt);
   void stop(std::optional<ProcessMode> processMode = std::nullopt);
@@ -70,6 +72,8 @@ public:
     return m_connectionState;
   }
 
+  ClipboardStatus localClipboardStatus() const;
+
   // setters
   void setAddress(const QString &address)
   {
@@ -94,6 +98,7 @@ Q_SIGNALS:
   void retryIn(int seconds);
   void peerFingerprint(const QString &fingerprint);
   void missingKeyboardLayouts(const QString &layouts);
+  void localClipboardStatusChanged(deskflow::ClipboardStatus status);
 
 private Q_SLOTS:
   void onProcessFinished(int exitCode, QProcess::ExitStatus);
@@ -115,6 +120,7 @@ private:
   QString correctedAddress(const QString &address) const;
   void setupDaemonLogTail(const QString &logPath);
   void checkExistingProcess();
+  void observeClipboardStatus(ipc::CoreIpcClient *pClient);
   static QString makeQuotedArgs(const QString &app, const QStringList &args);
   static QString processModeToString(const Settings::ProcessMode mode);
   static QString processStateToString(const CoreProcess::ProcessState state);
@@ -134,6 +140,8 @@ private:
   FileTail *m_daemonFileTail = nullptr;
   QProcess *m_process = nullptr;
   QString m_appPath;
+  QString m_coreIpcSocketName;
+  ipc::CoreIpcClient *m_pClipboardObserver = nullptr;
 };
 
 } // namespace deskflow::gui
