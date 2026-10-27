@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 - 2016 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2002 Chris Schoeneman
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
@@ -7,6 +8,7 @@
 
 #pragma once
 
+#include "common/ClipboardDiagnostics.h"
 #include "deskflow/ClipboardTypes.h"
 #include "deskflow/IComputer.h"
 #include "deskflow/KeyTypes.h"
@@ -291,6 +293,10 @@ protected:
   void leaveSecondary();
 
 private:
+  void updateClipboardStatus(ClipboardStatus status);
+  void logClipboardDiagnostics(ClipboardDiagnostics::Update update) const;
+  ClipboardDiagnostics m_clipboardDiagnostics;
+
   // our platform dependent computer
   IPlatformComputer *m_computer = nullptr;
 

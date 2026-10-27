@@ -15,6 +15,7 @@
 #endif
 #include "platform/XDGPowerManager.h"
 
+#include <atomic>
 #include <bitset>
 #include <climits>
 #include <libei.h>
@@ -88,6 +89,8 @@ public:
   void setOptions(const OptionsList &options) override;
   void setSequenceNumber(std::uint32_t) override;
   bool isPrimary() const override;
+  ClipboardStatus clipboardStatus() const override;
+  void setClipboardStatus(ClipboardStatus status);
 
   // Send clipboard event (needed by PortalInputCapture)
   void sendClipboardEvent(EventTypes type, ClipboardID id) const;
@@ -157,6 +160,7 @@ private:
   std::bitset<NumButtonIDs> m_buttons;
 
   // clipboard stuff
+  std::atomic<ClipboardStatus> m_clipboardReason{ClipboardStatus::WaitingForSession};
   EiClipboard *m_clipboard = nullptr;
   size_t m_maximumClipboardSize = INT_MAX;
 

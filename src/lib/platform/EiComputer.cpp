@@ -50,6 +50,11 @@ EiComputer::EiComputer(bool isPrimary, IEventQueue *events, bool usePortal)
       m_h{1},
       m_isOnComputer{isPrimary}
 {
+#ifndef HAVE_LIBPORTAL_CLIPBOARD
+  m_clipboardReason = ClipboardStatus::NotCompiled;
+#endif
+  if (!usePortal)
+    m_clipboardReason = ClipboardStatus::NotApplicable;
   initEi();
   m_keyState = new EiKeyState(this, events);
   // install event handlers
@@ -555,6 +560,21 @@ void EiComputer::setOptions(const OptionsList &options)
 bool EiComputer::isPrimary() const
 {
   return m_isPrimary;
+}
+
+ClipboardStatus EiComputer::clipboardStatus() const
+{
+  return m_clipboardReason.load();
+}
+
+void EiComputer::setClipboardStatus(ClipboardStatus status)
+{
+#ifndef HAVE_LIBPORTAL_CLIPBOARD
+  status = ClipboardStatus::NotCompiled;
+#endif
+  if (m_clipboardReason.exchange(status) == status)
+    return;
+  m_events->addEvent(Event(EventTypes::ClipboardStatusChanged, getEventTarget()));
 }
 
 void EiComputer::updateShape()

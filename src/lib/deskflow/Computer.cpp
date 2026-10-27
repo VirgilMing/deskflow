@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 - 2016 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2003 Chris Schoeneman
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
@@ -56,11 +57,17 @@ Computer::Computer(IPlatformComputer *platformComputer, IEventQueue *events)
   // reset options
   resetOptions();
 
+  m_events->addHandler(EventTypes::ClipboardStatusChanged, m_computer->getEventTarget(), [this](const Event &) {
+    updateClipboardStatus(m_computer->clipboardStatus());
+  });
+  updateClipboardStatus(m_computer->clipboardStatus());
+
   LOG_DEBUG("opened display");
 }
 
 Computer::~Computer()
 {
+  m_events->removeHandler(EventTypes::ClipboardStatusChanged, m_computer->getEventTarget());
 
   if (m_enabled) {
     disable();
@@ -272,6 +279,7 @@ void Computer::mouseWheel(int32_t xDelta, int32_t yDelta) const
 
 void Computer::resetOptions()
 {
+  m_clipboardDiagnostics.resetSharing();
   // reset options
   m_halfDuplex = 0;
 
@@ -286,9 +294,12 @@ void Computer::setOptions(const OptionsList &options)
     return;
   }
 
+  std::optional<bool> sharing;
   // update options
   for (uint32_t i = 0, n = (uint32_t)options.size(); i < n; i += 2) {
-    if (options[i] == kOptionHalfDuplexCapsLock) {
+    if (options[i] == kOptionClipboardSharing) {
+      sharing = options[i + 1] != 0;
+    } else if (options[i] == kOptionHalfDuplexCapsLock) {
       if (options[i + 1] != 0) {
         m_halfDuplex |= KeyModifierCapsLock;
       } else {
@@ -317,6 +328,43 @@ void Computer::setOptions(const OptionsList &options)
 
   // let screen handle its own options
   m_computer->setOptions(options);
+  logClipboardDiagnostics(m_clipboardDiagnostics.setSharing(sharing));
+}
+
+void Computer::updateClipboardStatus(ClipboardStatus status)
+{
+  logClipboardDiagnostics(m_clipboardDiagnostics.setStatus(status));
+}
+
+void Computer::logClipboardDiagnostics(ClipboardDiagnostics::Update update) const
+{
+  const char *reason = "waiting for a portal session";
+  using enum ClipboardStatus;
+  switch (m_clipboardDiagnostics.status()) {
+  case NotCompiled:
+    reason = "built without libportal clipboard support";
+    break;
+  case PortalUnavailable:
+    reason = "clipboard portal interface is unavailable";
+    break;
+  case PortalVersionUnsupported:
+    reason = "input capture portal version does not support clipboard sharing";
+    break;
+  case SessionNotEnabled:
+    reason = "clipboard is not enabled for the portal session";
+    break;
+  case Available:
+    reason = "portal session clipboard is available";
+    break;
+  default:
+    break;
+  }
+
+  if (update.warnUnavailable)
+    LOG_WARN("clipboard sharing is enabled, but local clipboard synchronization is unavailable: %s", reason);
+  else if (update.statusChanged && (m_clipboardDiagnostics.status() == ClipboardStatus::Available ||
+                                    clipboardUnavailable(m_clipboardDiagnostics.status())))
+    LOG_INFO("local clipboard synchronization: %s", reason);
 }
 
 void Computer::setSequenceNumber(uint32_t seqNum)

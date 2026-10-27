@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2026 Synergy App Ltd
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
@@ -15,6 +16,7 @@
 
 #include <QBuffer>
 #include <QByteArrayList>
+#include <QDBusInterface>
 #include <QDataStream>
 #include <QFile>
 #include <QImage>
@@ -29,6 +31,21 @@ namespace deskflow {
 static constexpr int kBmpSignatureSize = 2;
 static constexpr quint32 kBmpFileHeaderSize = 14;
 static constexpr quint32 kMinDibHeaderSize = 12;
+
+ClipboardStatus PortalClipboard::sessionStatus(XdpSession *session, int inputCaptureVersion)
+{
+  using enum ClipboardStatus;
+  if (xdp_session_is_clipboard_enabled(session))
+    return ClipboardStatus::Available;
+  if (inputCaptureVersion == 1)
+    return ClipboardStatus(PortalVersionUnsupported);
+
+  const QDBusInterface clipboard(
+      QStringLiteral("org.freedesktop.portal.Desktop"), QStringLiteral("/org/freedesktop/portal/desktop"),
+      QStringLiteral("org.freedesktop.portal.Clipboard"), QDBusConnection::sessionBus()
+  );
+  return ClipboardStatus(clipboard.isValid() ? SessionNotEnabled : PortalUnavailable);
+}
 
 QByteArray PortalClipboard::formatMimeTypes(const char *const *mimeTypes)
 {

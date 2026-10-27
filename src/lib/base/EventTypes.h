@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2023 Input-Leap Developers
  * SPDX-FileCopyrightText: (C) 2013 - 2016 Synergy App Ltd
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
@@ -229,6 +230,9 @@ enum class EventTypes : uint32_t
       The data is a pointer to a ClipboardInfo.
   */
   ClipboardChanged,
+
+  /// Local clipboard capability changed; query the platform computer for its latest status.
+  ClipboardStatusChanged,
 
   /// This event is sent whenever a clipboard chunk is transferred.
   ClipboardSending,
