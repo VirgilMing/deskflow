@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2026 Synergy App Ltd
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
@@ -25,4 +26,10 @@ void ipcSendConnectionState(deskflow::core::ConnectionState state)
 {
   const auto metaEnum = QMetaEnum::fromType<deskflow::core::ConnectionState>();
   ipcSendToClient(QStringLiteral("connectionState"), metaEnum.valueToKey(static_cast<int>(state)));
+}
+
+void ipcSendClipboardStatus(deskflow::ClipboardStatus status)
+{
+  auto &server = deskflow::core::ipc::CoreIpcServer::instance();
+  QMetaObject::invokeMethod(&server, [&server, status] { server.setClipboardStatus(status); }, Qt::QueuedConnection);
 }

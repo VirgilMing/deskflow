@@ -10,6 +10,7 @@
 #include "base/IEventQueue.h"
 #include "base/Log.h"
 #include "deskflow/IPlatformComputer.h"
+#include "deskflow/ipc/CoreIpc.h"
 
 #include <QProcess>
 
@@ -334,6 +335,7 @@ void Computer::setOptions(const OptionsList &options)
 void Computer::updateClipboardStatus(ClipboardStatus status)
 {
   logClipboardDiagnostics(m_clipboardDiagnostics.setStatus(status));
+  ipcSendClipboardStatus(status);
 }
 
 void Computer::logClipboardDiagnostics(ClipboardDiagnostics::Update update) const
