@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
 # SPDX-FileCopyrightText: (C) 2024 - 2025 Chris Rizzitello <sithlord48@gmail.com>
 # SPDX-License-Identifier: MIT
 
@@ -10,6 +11,8 @@ configure_file(Constants.h.in Constants.h @ONLY)
 configure_file(VersionInfo.h.in VersionInfo.h @ONLY)
 
 add_library(common STATIC
+  ClipboardDiagnostics.cpp
+  ClipboardDiagnostics.h
   Action.cpp
   Action.h
   Coordinate.h
