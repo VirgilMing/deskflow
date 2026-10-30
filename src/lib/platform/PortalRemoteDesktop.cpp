@@ -1,6 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
- * SPDX-FileCopyrightText: (C) 2024 - 2025 Deskflow Developers
+ * SPDX-FileCopyrightText: (C) 2024 - 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2024, 2026 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2022 Red Hat, Inc.
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
@@ -76,6 +76,7 @@ void PortalRemoteDesktop::reconnect(unsigned int timeout)
 
 void PortalRemoteDesktop::handleSessionClosed(XdpSession *session)
 {
+  m_computer->setClipboardStatus(ClipboardStatus::WaitingForSession);
   LOG_ERR("portal remote desktop session was closed, reconnecting");
   g_signal_handler_disconnect(session, m_sessionSignalId);
   m_sessionSignalId = 0;
@@ -104,7 +105,7 @@ void PortalRemoteDesktop::handleSessionStarted(GObject *object, GAsyncResult *re
       // some backends never report clipboard enabled even when granted; don't loop forever
       LOG_DEBUG("clipboard still not enabled on remote desktop session after one retry, continuing without it");
     } else {
-      LOG_WARN("clipboard not enabled on remote desktop session, discarding restore token to force a fresh session");
+      LOG_DEBUG("clipboard not enabled on remote desktop session, discarding restore token to force a fresh session");
       Settings::setValue(Settings::Client::XdpRestoreToken, QString());
       Settings::setValue(Settings::Client::XdpClipboardRetried, true);
       free(m_sessionRestoreToken);
@@ -126,6 +127,7 @@ void PortalRemoteDesktop::handleSessionStarted(GObject *object, GAsyncResult *re
       return;
     }
   }
+  m_computer->setClipboardStatus(PortalClipboard::sessionStatus(session));
 #endif
 
   free(m_sessionRestoreToken);
@@ -198,6 +200,7 @@ void PortalRemoteDesktop::handleInitSession(GObject *object, GAsyncResult *res)
 
 gboolean PortalRemoteDesktop::initSession()
 {
+  m_computer->setClipboardStatus(ClipboardStatus::WaitingForSession);
   if (auto sessionToken = Settings::value(Settings::Client::XdpRestoreToken).toByteArray(); !sessionToken.isEmpty()) {
     free(m_sessionRestoreToken);
     m_sessionRestoreToken = strdup(sessionToken.data());

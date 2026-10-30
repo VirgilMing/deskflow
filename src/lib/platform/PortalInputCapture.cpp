@@ -241,6 +241,7 @@ gboolean PortalInputCapture::timeoutHandler() const
 
 void PortalInputCapture::handleSessionClosed(XdpSession *session)
 {
+  m_computer->setClipboardStatus(ClipboardStatus::WaitingForSession);
   LOG_ERR("portal input capture session was closed, exiting");
   g_main_loop_quit(m_glibMainLoop);
   m_events->addEvent(Event(EventTypes::Quit));
@@ -301,7 +302,7 @@ void PortalInputCapture::setupSession(XdpInputCaptureSession *session)
       // some backends never report clipboard enabled even when granted; don't loop forever
       LOG_DEBUG("clipboard still not enabled on session after one retry, continuing without it");
     } else {
-      LOG_WARN("clipboard not enabled on session, discarding restore token to force a fresh session");
+      LOG_DEBUG("clipboard not enabled on session, discarding restore token to force a fresh session");
 #ifdef HAVE_LIBPORTAL_INPUTCAPTURE_RESTORE
       Settings::setValue(Settings::Server::XdpRestoreToken, QString());
 #endif
@@ -312,6 +313,7 @@ void PortalInputCapture::setupSession(XdpInputCaptureSession *session)
       return;
     }
   }
+  m_computer->setClipboardStatus(PortalClipboard::sessionStatus(parentSession, m_portalVersion));
 #endif
 
   auto fd = xdp_input_capture_session_connect_to_eis(session, &error);
@@ -565,6 +567,7 @@ void PortalInputCapture::addBarrier(
 
 gboolean PortalInputCapture::initSession()
 {
+  m_computer->setClipboardStatus(ClipboardStatus::WaitingForSession);
   LOG_DEBUG("setting up input capture session");
   XdpInputCaptureSession *session;
 #ifdef HAVE_LIBPORTAL_INPUTCAPTURE_RESTORE
@@ -606,7 +609,9 @@ gboolean PortalInputCapture::initSession()
       return FALSE;
     }
     m_session = session;
+#ifdef HAVE_LIBPORTAL_CLIPBOARD
     xdp_session_request_clipboard(xdp_input_capture_session_get_session(session));
+#endif
     xdp_input_capture_session_set_session_persistence(session, XDP_INPUT_CAPTURE_SESSION_PERSISTENCE_PERSISTENT);
     if (auto sessionToken = Settings::value(Settings::Server::XdpRestoreToken).toByteArray(); !sessionToken.isEmpty()) {
       xdp_input_capture_session_set_restore_token(session, strdup(sessionToken.data()));

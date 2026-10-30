@@ -1,5 +1,12 @@
-# SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
+# SPDX-FileCopyrightText: (C) 2025 - 2026 Deskflow Developers
 # SPDX-License-Identifier: MIT
+
+create_test(
+  NAME ClipboardDiagnosticsTests
+  DEPENDS common
+  SOURCE ClipboardDiagnosticsTests.cpp
+  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/common"
+)
 
 create_test(
   NAME SettingsTests

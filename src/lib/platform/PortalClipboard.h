@@ -1,11 +1,13 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2026 Synergy App Ltd
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
 
 #pragma once
 
+#include "common/Enums.h"
 #include "deskflow/IClipboard.h"
 
 #include <QByteArray>
@@ -19,6 +21,7 @@ class EiClipboard;
 class PortalClipboard
 {
 public:
+  static ClipboardStatus sessionStatus(XdpSession *session, int inputCaptureVersion = 0);
   struct SupportedMime
   {
     const char *mime;

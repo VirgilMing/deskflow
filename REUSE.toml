@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2026 Deskflow Developers
 # SPDX-FileCopyrightText: 2025 Chris Rizzitello <sithlord48@gmail.com>
 # SPDX-License-Identifier: MIT
 
@@ -5,6 +6,26 @@ version = 1
 SPDX-PackageName = "deskflow"
 SPDX-PackageSupplier = "Deskflow Devs"
 SPDX-PackageDownloadLocation = "https://github.com/deskflow/deskflow"
+
+[[annotations]]
+path = [
+  "src/lib/gui/dialogs/ServerConfigDialog.ui"
+  , "src/lib/gui/dialogs/ClientConfigDialog.ui"
+]
+SPDX-FileCopyrightText = "2026 Deskflow Developers"
+SPDX-License-Identifier = "GPL-2.0-only WITH LicenseRef-OpenSSL-Exception"
+
+[[annotations]]
+path = [
+  "translations/deskflow_es.ts"
+  , "translations/deskflow_it.ts"
+  , "translations/deskflow_ja.ts"
+  , "translations/deskflow_ko.ts"
+  , "translations/deskflow_ru.ts"
+  , "translations/deskflow_zh_CN.ts"
+]
+SPDX-FileCopyrightText = "2026 Deskflow Developers"
+SPDX-License-Identifier = "MIT"
 
 [[annotations]]
 path = [

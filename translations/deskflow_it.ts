@@ -1393,6 +1393,45 @@ L&apos;abilitazione di questa impostazione disabiliterà l&apos;interfaccia graf
     </message>
 </context>
 <context>
+    <name>deskflow::gui::ClipboardStatusLabel</name>
+    <message>
+        <source>Local clipboard support is available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Local clipboard synchronization is unavailable: this build does not include Wayland clipboard support</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Local clipboard synchronization is unavailable: the clipboard portal could not be accessed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Local clipboard synchronization is unavailable: the input capture portal version does not support clipboard sharing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Local clipboard synchronization is unavailable: clipboard access is not enabled for the current portal session</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Checking local clipboard support...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start Deskflow to check local clipboard support</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Local clipboard status is unknown: connection to the core process was lost</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>With clipboard sharing enabled and a size limit greater than zero, this server can still forward clipboard data between clients that support clipboard sharing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>i18n</name>
     <message>
         <source>LocalizedName</source>

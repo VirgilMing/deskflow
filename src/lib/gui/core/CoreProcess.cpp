@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2025 - 2026 Chris Rizzitello <sithlord48@gmail.com>
  * SPDX-FileCopyrightText: (C) 2024 - 2025 Synergy App Ltd
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
@@ -99,9 +100,10 @@ QString CoreProcess::wrapIpv6(const QString &address)
 // CoreProcess
 //
 
-CoreProcess::CoreProcess(const ServerConfig &serverConfig)
+CoreProcess::CoreProcess(const ServerConfig &serverConfig, const QString &ipcSocketName)
     : m_serverConfig(serverConfig),
-      m_daemonIpcClient{new ipc::DaemonIpcClient(this)}
+      m_daemonIpcClient{new ipc::DaemonIpcClient(this)},
+      m_coreIpcSocketName(ipcSocketName)
 {
   m_appPath = QStringLiteral("%1/%2").arg(QCoreApplication::applicationDirPath(), kCoreBinName);
   if (!QFile::exists(m_appPath)) {
@@ -147,10 +149,11 @@ void CoreProcess::checkExistingProcess()
 {
   qInfo("checking existing core");
 
-  auto *client = new ipc::CoreIpcClient(this);
-  connect(client, &ipc::CoreIpcClient::connected, this, [client] {
+  auto *client = new ipc::CoreIpcClient(this, m_coreIpcSocketName);
+  connect(client, &ipc::CoreIpcClient::connected, this, [this, client] {
     qInfo("existing core has matching version, leaving it running");
-    client->deleteLater();
+    QObject::disconnect(client, nullptr, this, nullptr);
+    observeClipboardStatus(client);
   });
   connect(client, &ipc::CoreIpcClient::versionMismatch, this, [client] {
     qInfo("existing core has mismatched version, asking it to stop");
@@ -168,6 +171,42 @@ void CoreProcess::checkExistingProcess()
     client->deleteLater();
   });
   client->connectToServer();
+}
+
+ClipboardStatus CoreProcess::localClipboardStatus() const
+{
+  using enum ProcessState;
+  if (m_pClipboardObserver)
+    return m_pClipboardObserver->clipboardStatus();
+  return m_processState == Starting || m_processState == Started || m_processState == RetryPending
+             ? ClipboardStatus::WaitingForSession
+             : ClipboardStatus::CoreNotRunning;
+}
+
+void CoreProcess::observeClipboardStatus(ipc::CoreIpcClient *pClient)
+{
+  if (m_pClipboardObserver == pClient)
+    return;
+  auto *pPrevious = m_pClipboardObserver;
+  m_pClipboardObserver = pClient;
+  // Only clipboard-only connections are owned here; the managed connection keeps its original lifecycle.
+  if (pPrevious && pPrevious != m_coreIpcClient) {
+    pPrevious->disconnectFromServer();
+    pPrevious->deleteLater();
+  }
+  if (pClient) {
+    connect(pClient, &ipc::CoreIpcClient::clipboardStatusChanged, this, [this, pClient] {
+      if (pClient == m_pClipboardObserver)
+        Q_EMIT localClipboardStatusChanged(localClipboardStatus());
+    });
+    connect(pClient, &QObject::destroyed, this, [this, pClient] {
+      if (pClient == m_pClipboardObserver) {
+        m_pClipboardObserver = nullptr;
+        Q_EMIT localClipboardStatusChanged(localClipboardStatus());
+      }
+    });
+  }
+  Q_EMIT localClipboardStatusChanged(localClipboardStatus());
 }
 
 void CoreProcess::onProcessFinished(int exitCode, QProcess::ExitStatus)
@@ -286,8 +325,7 @@ void CoreProcess::stopForegroundProcess()
     qDebug("sending stop command to core process");
     m_coreIpcClient->sendStop();
 
-    // Fallback: if the core doesn't confirm shutdown via IPC within the
-    // timeout, force-terminate it so we never hang in the Stopping state.
+    // If the owned QProcess does not confirm shutdown, fall back to termination.
     QTimer::singleShot(kRetryDelay, this, [this] {
       if (m_processState != ProcessState::Stopping) {
         return;
@@ -394,6 +432,7 @@ void CoreProcess::start(std::optional<ProcessMode> processModeOption)
 
   qInfo().noquote() << QString("starting %1 process (%2 mode)").arg(coreMode, processModeToString(processMode));
 
+  observeClipboardStatus(nullptr);
   setProcessState(ProcessState::Starting);
 
 #ifdef Q_OS_MACOS
@@ -457,13 +496,15 @@ void CoreProcess::start(std::optional<ProcessMode> processModeOption)
             return;
           }
 
+          observeClipboardStatus(nullptr);
           if (m_coreIpcClient) {
             m_coreIpcClient->disconnectFromServer();
             m_coreIpcClient->deleteLater();
             m_coreIpcClient = nullptr;
           }
 
-          m_coreIpcClient = new ipc::CoreIpcClient(this);
+          m_coreIpcClient = new ipc::CoreIpcClient(this, m_coreIpcSocketName);
+          observeClipboardStatus(m_coreIpcClient);
 
           // queued so a modal dialog opened by a handler can't block readyRead and strand later messages
           connect(
@@ -508,6 +549,8 @@ void CoreProcess::stop(std::optional<ProcessMode> processModeOption)
   qInfo("stopping core process (%s mode)", qPrintable(processModeToString(processMode)));
 
   if (m_coreIpcClient && processMode != ProcessMode::Desktop) {
+    if (m_pClipboardObserver == m_coreIpcClient)
+      observeClipboardStatus(nullptr);
     m_coreIpcClient->disconnectFromServer();
     m_coreIpcClient->deleteLater();
     m_coreIpcClient = nullptr;
@@ -621,6 +664,14 @@ void CoreProcess::setProcessState(ProcessState state)
       qPrintable(processStateToString(m_processState)), qPrintable(processStateToString(state))
   );
   m_processState = state;
+  if ((state == ProcessState::Stopped || state == ProcessState::Stopping) && m_pClipboardObserver == m_coreIpcClient)
+    observeClipboardStatus(nullptr);
+  if (state == ProcessState::Stopped && m_coreIpcClient) {
+    m_coreIpcClient->disconnectFromServer();
+    m_coreIpcClient->deleteLater();
+    m_coreIpcClient = nullptr;
+  }
+  Q_EMIT localClipboardStatusChanged(localClipboardStatus());
   Q_EMIT processStateChanged(state);
 }
 

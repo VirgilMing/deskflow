@@ -30,6 +30,11 @@ ClientConfigDialog::~ClientConfigDialog()
   delete ui;
 }
 
+void ClientConfigDialog::setClipboardStatus(deskflow::ClipboardStatus status)
+{
+  ui->labelClipboardStatus->setStatus(status);
+}
+
 void ClientConfigDialog::changeEvent(QEvent *e)
 {
   QDialog::changeEvent(e);

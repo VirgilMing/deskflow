@@ -1,6 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
- * SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
+ * SPDX-FileCopyrightText: (C) 2025 - 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 - 2016 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2002 Chris Schoeneman
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include "common/Enums.h"
 #include "deskflow/ClipboardTypes.h"
 #include "deskflow/IComputer.h"
 #include "deskflow/IKeyState.h"
@@ -144,6 +145,12 @@ public:
   Return true iff this computer is a primary computer.
   */
   virtual bool isPrimary() const = 0;
+
+  //! Initial clipboard capability; later changes are posted as ClipboardStatusChanged events.
+  virtual deskflow::ClipboardStatus clipboardStatus() const
+  {
+    return deskflow::ClipboardStatus(deskflow::ClipboardStatus::NotApplicable);
+  }
 
   //@}
   // IKeyState overrides

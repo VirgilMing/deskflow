@@ -1,6 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
- * SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
+ * SPDX-FileCopyrightText: (C) 2025 - 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2024 - 2026 Chris Rizzitello <sithord48@gmail.com>
  * SPDX-FileCopyrightText: (C) 2012 - 2024 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2008 Volker Lanz <vl@fidra.de>
@@ -610,6 +610,8 @@ void MainWindow::serverConnectionConfigureClient(const QString &clientName)
 {
   m_serverConfigDialogVisible = true;
   ServerConfigDialog dialog(this, m_serverConfig);
+  dialog.setClipboardStatus(m_coreProcess.localClipboardStatus());
+  connect(&m_coreProcess, &CoreProcess::localClipboardStatusChanged, &dialog, &ServerConfigDialog::setClipboardStatus);
   if (dialog.addClient(clientName) && dialog.exec() == QDialog::Accepted) {
     m_coreProcess.restart();
   }
@@ -1085,6 +1087,8 @@ void MainWindow::updateText()
 void MainWindow::showConfigureServer(const QString &message)
 {
   ServerConfigDialog dialog(this, serverConfig());
+  dialog.setClipboardStatus(m_coreProcess.localClipboardStatus());
+  connect(&m_coreProcess, &CoreProcess::localClipboardStatusChanged, &dialog, &ServerConfigDialog::setClipboardStatus);
   dialog.message(message);
   if ((dialog.exec() == QDialog::Accepted) && m_coreProcess.isStarted()) {
     m_coreProcess.restart();
@@ -1094,6 +1098,8 @@ void MainWindow::showConfigureServer(const QString &message)
 void MainWindow::showConfigureClient()
 {
   ClientConfigDialog dialog(this);
+  dialog.setClipboardStatus(m_coreProcess.localClipboardStatus());
+  connect(&m_coreProcess, &CoreProcess::localClipboardStatusChanged, &dialog, &ClientConfigDialog::setClipboardStatus);
   if ((dialog.exec() == QDialog::Accepted) && m_coreProcess.isStarted()) {
     m_coreProcess.restart();
   }

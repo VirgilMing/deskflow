@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2025 - 2026 Chris Rizzitello <sithlord48@gmail.com>
  * SPDX-FileCopyrightText: (C) 2012 - 2016 Synergy App Ltd
  * SPDX-FileCopyrightText: (C) 2008 Volker Lanz <vl@fidra.de>
@@ -8,9 +9,11 @@
 
 #pragma once
 
-#include "ComputerSetupModel.h"
+#include "common/Enums.h"
+
 #include "common/NetworkProtocol.h"
-#include "config/ServerConfig.h"
+#include "gui/ComputerSetupModel.h"
+#include "gui/config/ServerConfig.h"
 
 #include <QDialog>
 
@@ -28,6 +31,7 @@ class ServerConfigDialog : public QDialog
 public:
   ServerConfigDialog(QWidget *parent, ServerConfig &config);
   ~ServerConfigDialog() override;
+  void setClipboardStatus(deskflow::ClipboardStatus status);
   bool addClient(const QString &clientName);
   void message(const QString &message)
   {
